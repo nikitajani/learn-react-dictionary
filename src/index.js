@@ -4,20 +4,14 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
-import {
-  BrowserRouter as Router,
-  RouterProvider,
-  Route,
-  Link,
-  createBrowserRouter,
-} from "react-router-dom";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 // pages
 import SearchComponent from "./components/Search";
 
 const router = createBrowserRouter([
-  { path: "/", element: <div>Home</div> },
-  { path: "/search", element: <SearchComponent /> },
+  { path: "/", element: <App /> },
+  { path: "/search/:word", element: <SearchComponent /> },
   { path: "/about", element: <div>About</div> },
 ]);
 
