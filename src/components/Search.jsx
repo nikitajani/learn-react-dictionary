@@ -3,11 +3,15 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
 
+import Words from "./Words";
+
 const SearchComponent = function () {
   const navigate = useNavigate();
   const { word } = useParams();
   const [searchInput, setSearchInput] = useState(word || "");
+  const [searchWord, setSearchWord] = useState(word || "");
   const [meaning, setMeaning] = useState("");
+  const [definitions, setDefinitons] = useState([]);
 
   const formatDate = (date) => {
     const year = date.getFullYear();
@@ -16,43 +20,61 @@ const SearchComponent = function () {
     return `${year}-${month}-${day}`;
   };
 
+  //---API Call to get the meaning of searched word
   const getMeaning = useCallback(
     (input) => {
       axios
         .get(`https://api.dictionaryapi.dev/api/v2/entries/en/${input}`)
         .then((res) => {
-          console.log(res);
+          setDefinitons(
+            res.data.flatMap((details) => {
+              return (
+                <div>
+                  {details.meanings.flatMap((meaning) => {
+                    return (
+                      <div>
+                        {meaning.definitions.flatMap((definition) => {
+                          return <div>{definition.definition}</div>;
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })
+          );
         })
         .catch((err) => console.log(err));
-      navigate(`/search/${input}`);
     },
-    [navigate]
+    [definitions]
   );
 
-  const getWordOfDay = () => {
+  const getWordOfDay = useCallback(() => {
     axios
       .get(`https://api-portal.dictionary.com/editorial/wotd`)
       .then((res) => {
-        setSearchInput(res.data?.wordoftheday?.results["2024-08-19"]?.word);
+        setSearchWord(
+          res.data?.wordoftheday?.results[formatDate(new Date())]?.word
+        );
         setMeaning(
-          res.data?.wordoftheday?.results["2024-08-19"]?.short_definition
+          res.data?.wordoftheday?.results[formatDate(new Date())]
+            ?.short_definition
         );
       })
       .catch((err) => console.log(err));
-  };
+  }, []);
 
   useEffect(() => {
     if (word) {
-      setSearchInput(word);
       getMeaning(word);
     } else {
       getWordOfDay();
     }
-  }, [word, getMeaning]);
+  }, [word]);
 
   const handleSearch = (e) => {
     if (e.key === "Enter") {
-      getMeaning(searchInput);
+      navigate(`/search/${searchInput}`);
     }
   };
 
@@ -68,16 +90,16 @@ const SearchComponent = function () {
           }}
         />
       </div>
-      {meaning ? (
+
+      {meaning && !word ? (
         <div>
           <div className="flex center word">
-            <h3>{searchInput}</h3>
+            <div className="text-2xl font-bold underline">{searchWord}</div>
           </div>
           <div className="flex center word">{meaning}</div>
         </div>
-      ) : (
-        ""
-      )}
+      ) : null}
+      {definitions?.length ? <Words data={definitions} /> : null}
     </>
   );
 };
